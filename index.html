@@ -3,16 +3,22 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>To-Do List Ultra Complete</title>
+<title>To-Do List Ultra (Pastel Theme)</title>
 
 <!-- Chart.js CDN -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-  /* ---------- Basic layout (Notion-like) ---------- */
   :root{
-    --bg:#f8f9fa; --card:#fff; --muted:#6b7280; --accent:#2f76ff;
-    --success:#28a745; --warn:#e6a700; --danger:#dc3545;
+    --bg:#f2f0fb;         /* pastel lavender background */
+    --card:#fffafc;       /* slightly warm white card */
+    --muted:#6b6f85;
+    --accent:#6c63ff;     /* pastel purple */
+    --accent-2:#2f76ff;   /* blue accent */
+    --success:#28a745;
+    --warn:#e6a700;
+    --danger:#dc3545;
+    --soft-border:#ece9f8;
   }
   *{box-sizing:border-box}
   body{
@@ -20,62 +26,57 @@
     background:var(--bg); color:#222; margin:0; padding:36px; display:flex; justify-content:center;
   }
   .container{width:100%;max-width:980px;}
-  h1{font-size:22px;margin:0 0 18px 0;font-weight:600;display:flex;align-items:center;gap:10px}
-  .card{background:var(--card);border:1px solid #e5e7eb;border-radius:10px;padding:18px;box-shadow:0 2px 6px rgba(0,0,0,0.04)}
+  h1{font-size:22px;margin:0 0 18px 0;font-weight:600;display:flex;align-items:center;gap:10px;color:#2b224b}
+  .card{background:var(--card);border:1px solid var(--soft-border);border-radius:10px;padding:18px;box-shadow:0 6px 18px rgba(108,99,255,0.06)}
   .todo-wrap{display:flex;gap:18px;flex-direction:column}
 
-  /* ---------- Top: progress & controls ---------- */
   .top-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
   .progress-box{flex:1;min-width:220px}
-  .progress-track{background:#eef2ff;border-radius:999px;height:12px;overflow:hidden}
-  .progress-bar{height:100%;width:0%;background:linear-gradient(90deg,var(--accent),#a14bff);transition:width .6s ease}
+  .progress-track{background:#efedff;border-radius:999px;height:12px;overflow:hidden}
+  .progress-bar{height:100%;width:0%;background:linear-gradient(90deg,var(--accent),var(--accent-2));transition:width .6s ease}
   #motivation{font-size:13px;color:var(--muted);margin-top:8px}
 
   .controls{display:grid;grid-template-columns:2fr 1fr 1fr;gap:8px;align-items:center}
-  .controls input,.controls select{padding:10px;border-radius:8px;border:1px solid #e8e8e8;font-size:14px}
+  .controls input,.controls select{padding:10px;border-radius:10px;border:1px solid var(--soft-border);font-size:14px;background:transparent}
   .controls .small{font-size:13px;padding:8px}
 
-  /* ---------- Add task form ---------- */
   .add-row{display:grid;grid-template-columns:2fr 1.4fr 1fr 1fr auto;gap:8px;align-items:center;margin-top:8px}
-  .add-row input,.add-row select{padding:10px;border-radius:8px;border:1px solid #e8e8e8;font-size:14px}
-  .btn{padding:10px 12px;border-radius:8px;border:none;background:var(--accent);color:white;cursor:pointer;font-weight:600}
-  .btn.ghost{background:transparent;color:var(--muted);border:1px solid #ececec}
+  .add-row input,.add-row select{padding:10px;border-radius:10px;border:1px solid var(--soft-border);font-size:14px;background:transparent}
+  .btn{padding:10px 12px;border-radius:10px;border:none;background:var(--accent);color:white;cursor:pointer;font-weight:600;box-shadow:0 6px 14px rgba(108,99,255,0.08)}
+  .btn.ghost{background:transparent;color:var(--muted);border:1px solid var(--soft-border);box-shadow:none}
 
-  /* ---------- Task list ---------- */
-  .list {margin-top:6px;display:flex;flex-direction:column;gap:10px}
+  .list {margin-top:6px;display:flex;flex-direction:column;gap:12px}
   .task {
-    display:flex;flex-direction:column;gap:10px;padding:12px;border-radius:8px;border:1px solid #f0f0f0;background:#fff;cursor:grab
+    display:flex;flex-direction:column;gap:10px;padding:12px;border-radius:12px;border:1px solid #f4f2fb;background:linear-gradient(180deg,#fff,#fffbff);cursor:grab;
+    box-shadow:0 2px 8px rgba(44,36,88,0.04)
   }
   .task.dragging{opacity:.45}
   .task-top{display:flex;align-items:center;gap:12px;justify-content:space-between}
   .task-left{display:flex;align-items:center;gap:12px;flex:1;min-width:0}
-  .task-left span.title{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .task-left span.title{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#2b2448}
   .task-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-  .badge{font-size:12px;padding:4px 7px;border-radius:6px;background:#f3f4f6;border:1px solid #eee}
-  .badge.deadline{background:#eef3ff;color:#1645a2;border-color:#dbe9ff}
-  .badge.tag{background:#f5f5f5;color:#333}
-  .badge.priority-high{background:#ffe7e7;color:#9a1e1e;border-color:#ffd6d6}
-  .badge.priority-medium{background:#fff7e0;color:#6b4c00;border-color:#fff0b8}
-  .badge.priority-low{background:#e9fff5;color:#005a3b;border-color:#c6f7e6}
+  .badge{font-size:12px;padding:6px 8px;border-radius:10px;background:#f7f6ff;border:1px solid var(--soft-border)}
+  .badge.deadline{background:#eef5ff;color:#144a9b;border-color:#dbeafc}
+  .badge.tag{background:#f6f7fb;color:#2b2448}
+  .badge.priority-high{background:#fff0f3;color:#9a1636;border-color:#ffd6e0}
+  .badge.priority-medium{background:#fff8ef;color:#7a5a00;border-color:#fff0c9}
+  .badge.priority-low{background:#e9fff6;color:#00684a;border-color:#c9f3df}
 
   .task-actions{display:flex;gap:8px;align-items:center}
-  .icon{border-radius:6px;padding:6px 8px;border:1px solid #ececec;background:#fff;cursor:pointer}
-  .icon.danger{color:var(--danger);border-color:#f8d7da}
+  .icon{border-radius:8px;padding:6px 8px;border:1px solid var(--soft-border);background:#fff;cursor:pointer;color:var(--muted)}
+  .icon.danger{color:var(--danger);border-color:#f7d7d9}
 
-  /* ---------- Subtasks ---------- */
-  .subtasks{display:flex;flex-direction:column;gap:8px;padding-left:34px}
-  .subtask{display:flex;align-items:center;justify-content:space-between;padding:8px;border-radius:8px;border:1px solid #f0f0f0;background:#fafafa}
+  .subtasks{display:flex;flex-direction:column;gap:8px;padding-left:36px}
+  .subtask{display:flex;align-items:center;justify-content:space-between;padding:8px;border-radius:10px;border:1px solid #f3f2fb;background:#fffafc}
   .sub-left{display:flex;gap:8px;align-items:center;min-width:0}
-  .sub-left span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .sub-form{display:flex;gap:8px;margin-top:8px;padding-left:34px}
-  .sub-form input{flex:1;padding:8px;border-radius:8px;border:1px solid #eaeaea}
+  .sub-left span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#2b2448}
+  .sub-form{display:flex;gap:8px;margin-top:8px;padding-left:36px}
+  .sub-form input{flex:1;padding:8px;border-radius:10px;border:1px solid var(--soft-border);background:transparent}
 
-  /* ---------- Bottom: utilities & stats ---------- */
   .bottom-row{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap;margin-top:12px}
-  .stats{width:320px;padding:12px;border-radius:8px;background:#fff;border:1px solid #f0f0f0}
+  .stats{width:320px;padding:12px;border-radius:10px;background:linear-gradient(180deg,#fff,#fffbff);border:1px solid #f4f2fb}
   .utils{display:flex;gap:8px;align-items:center}
 
-  /* responsive */
   @media (max-width:880px){
     .controls{grid-template-columns:1fr}
     .add-row{grid-template-columns:1fr;grid-auto-rows:auto}
@@ -88,11 +89,10 @@
     <h1>📋 Tugas Farhan</h1>
 
     <div class="card todo-wrap">
-      <!-- progress -->
       <div class="top-row">
         <div class="progress-box">
           <div style="display:flex;align-items:center;justify-content:space-between">
-            <div style="font-weight:600">Progress</div>
+            <div style="font-weight:600;color:#3b2f63">Progress</div>
             <div style="font-size:13px;color:var(--muted)" id="progressText">0%</div>
           </div>
           <div class="progress-track" style="margin-top:8px">
@@ -110,7 +110,6 @@
         </div>
       </div>
 
-      <!-- controls -->
       <div class="controls">
         <input id="search" placeholder="Cari tugas..." />
         <select id="filter">
@@ -119,14 +118,11 @@
           <option value="todo">Belum</option>
         </select>
         <div style="display:flex;gap:8px;justify-content:flex-end;align-items:center">
-          <button class="btn ghost" id="exportJson">Export JSON</button>
-          <label style="display:inline-flex;align-items:center" class="btn ghost">
-            Import JSON <input type="file" id="importFile" accept=".json" style="display:none" />
-          </label>
+          <!-- JSON export/import removed per request -->
+          <button class="btn ghost" id="exportCSV">Export CSV</button>
         </div>
       </div>
 
-      <!-- add task -->
       <div class="add-row">
         <input id="newText" placeholder="Tambah tugas baru..." />
         <input id="newDeadline" type="datetime-local" />
@@ -141,16 +137,14 @@
         <button class="btn" id="addBtn">Tambah</button>
       </div>
 
-      <!-- list -->
       <div class="list card" id="taskListContainer" style="margin-top:6px;padding:14px">
         <div id="taskList" class="list"></div>
       </div>
 
-      <!-- bottom row: stats + utils -->
       <div class="bottom-row">
         <div class="stats card">
           <div style="display:flex;justify-content:space-between;align-items:center">
-            <div style="font-weight:700">Stats</div>
+            <div style="font-weight:700;color:#3b2f63">Stats</div>
             <div style="font-size:13px;color:var(--muted)">XP: <span id="xp">0</span> • Level: <span id="level">1</span></div>
           </div>
           <canvas id="catChart" style="max-height:160px;margin-top:12px"></canvas>
@@ -163,14 +157,14 @@
 
         <div style="flex:1;min-width:220px" class="card">
           <div style="display:flex;justify-content:space-between;align-items:center">
-            <div style="font-weight:700">Utilities</div>
+            <div style="font-weight:700;color:#3b2f63">Utilities</div>
             <div style="font-size:13px;color:var(--muted)">Reminders: <span id="remCount">0</span></div>
           </div>
 
           <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
             <button class="btn ghost" id="clearAll">Hapus Semua</button>
             <button class="btn ghost" id="resetStats">Reset XP</button>
-            <button class="btn" id="exportCSV">Export CSV</button>
+            <button class="btn" id="exportCSV2">Export CSV</button>
           </div>
 
           <div style="margin-top:12px;font-size:13px;color:var(--muted)">
@@ -185,7 +179,7 @@
 /* -----------------------
    Data model & storage
    ----------------------- */
-const LS_KEY = 'todo_ultra_v1';
+const LS_KEY = 'todo_ultra_pastel_v1';
 let state = JSON.parse(localStorage.getItem(LS_KEY)) || {
   tasks: [],
   xp: 0,
@@ -206,7 +200,6 @@ function addXP(amount){
   const levelBefore = state.level;
   const newLevel = Math.floor(state.xp / 100) + 1;
   state.level = newLevel;
-  // badges: simple examples
   if(state.xp >= 100 && !state.badges.includes('Beginner')) state.badges.push('Beginner');
   if(state.xp >= 500 && !state.badges.includes('Productivity Master')) state.badges.push('Productivity Master');
   persist(); updateStatsUI();
@@ -230,17 +223,6 @@ const doneCountEl = $('#doneCount');
 const remCountEl = $('#remCount');
 const autosortEl = $('#autosort');
 
-function getDeadlineClass(deadline){
-  if(!deadline) return '';
-  const now = new Date();
-  const d = new Date(deadline);
-  const diffHours = (d - now)/(1000*60*60);
-  if(diffHours < 0) return 'deadline-danger';
-  if(diffHours <= 48) return 'deadline-warning';
-  return 'deadline-safe';
-}
-
-// compute simple reminders count (due within 1 hour or overdue)
 function computeReminders(tasks){
   const now = new Date();
   let c = 0;
@@ -257,7 +239,6 @@ function sortTasksIfNeeded(){
   if(autosortEl.checked){
     state.tasks.sort((a,b)=>{
       if(!a.deadline && !b.deadline) {
-        // fallback to priority weight (high first)
         const w = {high:0,medium:1,low:2};
         return (w[a.priority||'medium'] || 1) - (w[b.priority||'medium'] || 1);
       }
@@ -279,7 +260,6 @@ function render(){
 
   let total = 0, done = 0;
   state.tasks.forEach((task, idx)=>{
-    // filter & search
     if(filter === 'done' && !task.done) return;
     if(filter === 'todo' && task.done) return;
     if(q && !task.text.toLowerCase().includes(q)) return;
@@ -292,13 +272,11 @@ function render(){
     taskEl.draggable = true;
     taskEl.dataset.id = task.id;
 
-    // top row
     const topRow = document.createElement('div'); topRow.className = 'task-top';
     const left = document.createElement('div'); left.className = 'task-left';
     const cb = document.createElement('input'); cb.type='checkbox'; cb.checked = !!task.done;
     const title = document.createElement('span'); title.className = 'title'; title.textContent = task.text;
     if(task.done) title.classList.add('done');
-    // double click edit
     title.addEventListener('dblclick', ()=> {
       const n = prompt('Edit tugas', task.text);
       if(n !== null){ task.text = n.trim(); persist(); render(); }
@@ -306,7 +284,6 @@ function render(){
 
     cb.addEventListener('change', ()=>{
       task.done = cb.checked;
-      // if parent check, sync subtasks
       if(task.subtasks && task.subtasks.length){
         task.subtasks.forEach(st => st.done = cb.checked);
       }
@@ -314,11 +291,8 @@ function render(){
       persist(); render();
     });
 
-    left.appendChild(cb);
-    left.appendChild(title);
-    topRow.appendChild(left);
+    left.appendChild(cb); left.appendChild(title); topRow.appendChild(left);
 
-    // meta
     const meta = document.createElement('div'); meta.className = 'task-meta';
     if(task.deadline){
       const dl = document.createElement('span'); dl.className='badge deadline';
@@ -331,10 +305,8 @@ function render(){
     const pri = document.createElement('span'); pri.className = 'badge ' + (task.priority==='high'?'priority-high':task.priority==='medium'?'priority-medium':'priority-low');
     pri.textContent = task.priority==='high'? 'Tinggi' : task.priority==='medium'?'Sedang':'Rendah';
     meta.appendChild(pri);
-
     topRow.appendChild(meta);
 
-    // actions
     const actions = document.createElement('div'); actions.className = 'task-actions';
     const btnSub = document.createElement('button'); btnSub.className = 'icon'; btnSub.textContent = '+ Sub';
     const btnEdit = document.createElement('button'); btnEdit.className = 'icon'; btnEdit.textContent = 'Edit';
@@ -342,7 +314,6 @@ function render(){
     actions.appendChild(btnSub); actions.appendChild(btnEdit); actions.appendChild(btnDel);
     topRow.appendChild(actions);
 
-    // subtask list
     const subsWrap = document.createElement('div'); subsWrap.className = 'subtasks';
     (task.subtasks||[]).forEach(st=>{
       const si = document.createElement('div'); si.className='subtask';
@@ -356,8 +327,7 @@ function render(){
       });
       scb.addEventListener('change', ()=>{
         st.done = scb.checked;
-        // if all subtasks done then parent done
-        const allDone = (task.subtasks||[]).length && (task.subtasks||[]).every(x=>x.done);
+        const allDone = task.subtasks.length && task.subtasks.every(x=>x.done);
         task.done = allDone;
         if(st.done) addXP(3);
         persist(); render();
@@ -368,11 +338,9 @@ function render(){
         task.subtasks = (task.subtasks||[]).filter(x=>x.id !== st.id);
         persist(); render();
       });
-      si.appendChild(sleft); si.appendChild(sdel);
-      subsWrap.appendChild(si);
+      si.appendChild(sleft); si.appendChild(sdel); subsWrap.appendChild(si);
     });
 
-    // sub add form
     const subForm = document.createElement('div'); subForm.className='sub-form';
     const subInput = document.createElement('input'); subInput.placeholder='Tambah subtask...';
     const subBtn = document.createElement('button'); subBtn.className='btn ghost'; subBtn.textContent='Tambah';
@@ -385,7 +353,6 @@ function render(){
     subInput.addEventListener('keydown', e=>{ if(e.key==='Enter') subBtn.click(); });
     subForm.appendChild(subInput); subForm.appendChild(subBtn);
 
-    // wire up action buttons
     btnSub.addEventListener('click', ()=> subInput.focus());
     btnEdit.addEventListener('click', ()=> {
       const n = prompt('Edit tugas', task.text);
@@ -402,14 +369,12 @@ function render(){
     if((task.subtasks||[]).length) taskEl.appendChild(subsWrap);
     taskEl.appendChild(subForm);
 
-    // drag events
     taskEl.addEventListener('dragstart', (e)=> { taskEl.classList.add('dragging'); e.dataTransfer.setData('text/plain', task.id); });
     taskEl.addEventListener('dragend', ()=> { taskEl.classList.remove('dragging'); persist(); render(); });
 
     taskListEl.appendChild(taskEl);
   });
 
-  // progress & stats
   const totalTasks = state.tasks.length;
   const doneTasks = state.tasks.filter(t=>t.done).length;
   const pct = totalTasks ? Math.round((doneTasks/totalTasks)*100) : 0;
@@ -425,24 +390,17 @@ function render(){
   xpEl.textContent = state.xp;
   levelEl.textContent = state.level;
 
-  // badges
   badgesEl.innerHTML='';
   state.badges.forEach(b=>{
     const sp = document.createElement('span'); sp.className='badge'; sp.textContent=b;
     badgesEl.appendChild(sp);
   });
 
-  // reminders count
   remCountEl.textContent = computeReminders(state.tasks);
-
-  // update charts
   updateCharts();
   persist();
 }
 
-/* -----------------------
-   Drag-over handling
-   ----------------------- */
 taskListEl.addEventListener('dragover', e=>{
   e.preventDefault();
   const dragging = document.querySelector('.dragging');
@@ -454,15 +412,11 @@ taskListEl.addEventListener('dragover', e=>{
 
 taskListEl.addEventListener('drop', e=>{
   e.preventDefault();
-  // rebuild order
   const newOrder = [...taskListEl.querySelectorAll('.task')].map(el => el.dataset.id);
   state.tasks = newOrder.map(id => state.tasks.find(t => t.id === id)).filter(Boolean);
   persist(); render();
 });
 
-/* -----------------------
-   Add task & events
-   ----------------------- */
 $('#addBtn').addEventListener('click', ()=> {
   const text = $('#newText').value.trim();
   if(!text) return;
@@ -479,43 +433,8 @@ $('#search').addEventListener('input', render);
 $('#filter').addEventListener('change', render);
 $('#autosort').addEventListener('change', render);
 
-/* -----------------------
-   Export / Import JSON & CSV
-   ----------------------- */
-$('#exportJson').addEventListener('click', ()=>{
-  const dataStr = JSON.stringify(state, null, 2);
-  const blob = new Blob([dataStr], {type:'application/json'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href = url; a.download = 'todo-ultra.json'; a.click();
-  URL.revokeObjectURL(url);
-});
-
-$('#importFile').addEventListener('change', (e)=>{
-  const f = e.target.files[0]; if(!f) return;
-  const reader = new FileReader();
-  reader.onload = ev => {
-    try{
-      const imported = JSON.parse(ev.target.result);
-      if(imported.tasks) {
-        // merge simple: append imported tasks (avoid id collision by regenerating ids)
-        imported.tasks.forEach(t=>{
-          t.id = genId();
-          (t.subtasks || []).forEach(s=> s.id = genId());
-          state.tasks.push(t);
-        });
-        // also import xp/level optionally
-        if(typeof imported.xp === 'number') state.xp = (state.xp||0) + (imported.xp||0);
-        persist(); render();
-        alert('Import sukses!');
-      } else alert('File JSON tidak valid.');
-    }catch(err){ alert('Gagal membaca file JSON.'); }
-  };
-  reader.readAsText(f);
-  e.target.value='';
-});
-
+/* Export CSV (kept) */
 $('#exportCSV').addEventListener('click', ()=>{
-  // Flatten tasks (one row per task; subtasks count)
   const rows = [['id','text','done','deadline','category','priority','subtask_count']];
   state.tasks.forEach(t=>{
     rows.push([t.id, `"${t.text.replace(/"/g,'""')}"`, t.done, t.deadline||'', t.category, t.priority, (t.subtasks||[]).length]);
@@ -525,10 +444,8 @@ $('#exportCSV').addEventListener('click', ()=>{
   const url = URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='todo-ultra.csv'; a.click();
   URL.revokeObjectURL(url);
 });
+$('#exportCSV2').addEventListener('click', ()=>$('#exportCSV').click());
 
-/* -----------------------
-   Clear / reset
-   ----------------------- */
 $('#clearAll').addEventListener('click', ()=>{
   if(confirm('Hapus semua tugas?')) { state.tasks = []; persist(); render(); }
 });
@@ -536,53 +453,34 @@ $('#resetStats').addEventListener('click', ()=>{
   if(confirm('Reset XP & level?')) { state.xp = 0; state.level = 1; state.badges = []; persist(); render(); }
 });
 
-/* -----------------------
-   Charts (Chart.js)
-   ----------------------- */
+/* Charts */
 let catChart=null, compChart=null;
-
 function updateCharts(){
-  // category distribution (pie)
   const catCounts = {};
-  state.tasks.forEach(t => { catCounts[t.category = (t.category||'Umum')] = (catCounts[t.category]||0)+1; });
+  state.tasks.forEach(t => { const c = t.category || 'Umum'; catCounts[c] = (catCounts[c]||0)+1; });
   const labels = Object.keys(catCounts);
   const data = Object.values(catCounts);
-
   if(!catChart){
-    catChart = new Chart($('#catChart'), {type:'pie', data:{labels, datasets:[{data, backgroundColor:['#60a5fa','#f97316','#34d399','#a78bfa','#f43f5e']}]}, options:{plugins:{legend:{position:'bottom'}}}});
-  } else {
-    catChart.data.labels = labels; catChart.data.datasets[0].data = data; catChart.update();
-  }
+    catChart = new Chart($('#catChart'), {type:'pie', data:{labels, datasets:[{data, backgroundColor:['#8b5cf6','#60a5fa','#34d399','#f97316','#f43f5e']}]}, options:{plugins:{legend:{position:'bottom'}}}});
+  } else { catChart.data.labels = labels; catChart.data.datasets[0].data = data; catChart.update(); }
 
-  // completion bar: last 7 days completions
-  const last7 = Array.from({length:7},(_,i)=> {
-    const d = new Date(); d.setDate(d.getDate() - (6 - i)); d.setHours(0,0,0,0);
-    return d;
-  });
-
+  const last7 = Array.from({length:7},(_,i)=> { const d=new Date(); d.setDate(d.getDate() - (6 - i)); d.setHours(0,0,0,0); return d; });
   const compCounts = last7.map(d=>{
     const next = new Date(d); next.setDate(d.getDate()+1);
     return state.tasks.reduce((acc,t)=>{
-      // find completedAt if we tracked; we don't track timestamps currently.
-      // We'll approximate: count tasks with deadline in that date and marked done.
       if(!t.deadline) return acc;
       const dl = new Date(t.deadline);
       if(t.done && dl >= d && dl < next) return acc+1;
       return acc;
     },0);
   });
-
   const labels7 = last7.map(d=> d.toLocaleDateString('id-ID',{month:'short',day:'numeric'}));
   if(!compChart){
-    compChart = new Chart($('#compChart'), {type:'bar', data:{labels:labels7,datasets:[{label:'Completions (approx)',data:compCounts}]}, options:{plugins:{legend:{display:false}}}});
-  } else {
-    compChart.data.labels = labels7; compChart.data.datasets[0].data = compCounts; compChart.update();
-  }
+    compChart = new Chart($('#compChart'), {type:'bar', data:{labels:labels7,datasets:[{label:'Completions (approx)',data:compCounts,backgroundColor:'#6c63ff'}]}, options:{plugins:{legend:{display:false}}}});
+  } else { compChart.data.labels = labels7; compChart.data.datasets[0].data = compCounts; compChart.update(); }
 }
 
-/* -----------------------
-   Reminders (Notification API)
-   ----------------------- */
+/* Reminders (Notification API) */
 let notifyEnabled = false;
 $('#requestNotifBtn').addEventListener('click', async ()=>{
   if(Notification.permission === 'granted'){ notifyEnabled = true; alert('Notifikasi sudah aktif.'); }
@@ -600,10 +498,8 @@ function checkReminders(){
     if(!t.deadline) return;
     const d = new Date(t.deadline);
     const mins = (d - now)/(1000*60);
-    // send reminder if within 60 mins and not notified yet, or overdue and not reported
     t._notified = t._notified || {withinHour:false,overdue:false};
     if(mins <= 60 && mins > 0 && !t._notified.withinHour){
-      // notify
       const text = `Tugas "${t.text}" akan jatuh tempo dalam ${Math.round(mins)} menit.`;
       triggerNotification('Deadline dekat', text);
       t._notified.withinHour = true;
@@ -622,32 +518,22 @@ function triggerNotification(title, body){
     try { new Notification(title, {body}); }
     catch(e){ alert(`${title}\n${body}`); }
   } else {
-    // fallback in-page
     alert(`${title}\n\n${body}`);
   }
 }
 
-/* -----------------------
-   Initialize
-   ----------------------- */
+/* Init */
 function init(){
-  // ensure each task & subtask has id
   state.tasks = state.tasks.map(t=>{
     if(!t.id) t.id = genId();
     t.subtasks = (t.subtasks||[]).map(s => { if(!s.id) s.id = genId(); return s; });
     return t;
   });
-  persist();
-  render();
-  updateCharts();
-  // check reminders each minute
-  setInterval(checkReminders, 60*1000);
-  // also check immediately
-  checkReminders();
+  persist(); render(); updateCharts(); setInterval(checkReminders,60*1000); checkReminders();
 }
-
 init();
 
+function updateStatsUI(){ xpEl.textContent = state.xp; levelEl.textContent = state.level; }
 </script>
 </body>
 </html>
