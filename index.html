@@ -1,318 +1,653 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>To-Do List Pro Max</title>
-  <style>
-    body {
-      font-family: "Inter", sans-serif;
-      background: #f8f9fa;
-      color: #2f3437;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 40px 20px;
-    }
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>To-Do List Ultra Complete</title>
 
-    h1 {
-      margin-bottom: 20px;
-      font-weight: 600;
-      font-size: 28px;
-    }
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    .todo-container {
-      background: #fff;
-      border: 1px solid #e5e5e5;
-      border-radius: 8px;
-      padding: 20px;
-      width: 100%;
-      max-width: 600px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
+<style>
+  /* ---------- Basic layout (Notion-like) ---------- */
+  :root{
+    --bg:#f8f9fa; --card:#fff; --muted:#6b7280; --accent:#2f76ff;
+    --success:#28a745; --warn:#e6a700; --danger:#dc3545;
+  }
+  *{box-sizing:border-box}
+  body{
+    font-family: "Inter",system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;
+    background:var(--bg); color:#222; margin:0; padding:36px; display:flex; justify-content:center;
+  }
+  .container{width:100%;max-width:980px;}
+  h1{font-size:22px;margin:0 0 18px 0;font-weight:600;display:flex;align-items:center;gap:10px}
+  .card{background:var(--card);border:1px solid #e5e7eb;border-radius:10px;padding:18px;box-shadow:0 2px 6px rgba(0,0,0,0.04)}
+  .todo-wrap{display:flex;gap:18px;flex-direction:column}
 
-    .progress {
-      background: #e9ecef;
-      border-radius: 6px;
-      overflow: hidden;
-      height: 10px;
-    }
+  /* ---------- Top: progress & controls ---------- */
+  .top-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+  .progress-box{flex:1;min-width:220px}
+  .progress-track{background:#eef2ff;border-radius:999px;height:12px;overflow:hidden}
+  .progress-bar{height:100%;width:0%;background:linear-gradient(90deg,var(--accent),#a14bff);transition:width .6s ease}
+  #motivation{font-size:13px;color:var(--muted);margin-top:8px}
 
-    .progress-bar {
-      height: 100%;
-      background: #2f76ff;
-      width: 0%;
-      transition: width 0.5s ease;
-    }
+  .controls{display:grid;grid-template-columns:2fr 1fr 1fr;gap:8px;align-items:center}
+  .controls input,.controls select{padding:10px;border-radius:8px;border:1px solid #e8e8e8;font-size:14px}
+  .controls .small{font-size:13px;padding:8px}
 
-    #motivation {
-      font-size: 14px;
-      color: #555;
-    }
+  /* ---------- Add task form ---------- */
+  .add-row{display:grid;grid-template-columns:2fr 1.4fr 1fr 1fr auto;gap:8px;align-items:center;margin-top:8px}
+  .add-row input,.add-row select{padding:10px;border-radius:8px;border:1px solid #e8e8e8;font-size:14px}
+  .btn{padding:10px 12px;border-radius:8px;border:none;background:var(--accent);color:white;cursor:pointer;font-weight:600}
+  .btn.ghost{background:transparent;color:var(--muted);border:1px solid #ececec}
 
-    .controls {
-      display: grid;
-      grid-template-columns: 2fr 1fr;
-      gap: 8px;
-    }
+  /* ---------- Task list ---------- */
+  .list {margin-top:6px;display:flex;flex-direction:column;gap:10px}
+  .task {
+    display:flex;flex-direction:column;gap:10px;padding:12px;border-radius:8px;border:1px solid #f0f0f0;background:#fff;cursor:grab
+  }
+  .task.dragging{opacity:.45}
+  .task-top{display:flex;align-items:center;gap:12px;justify-content:space-between}
+  .task-left{display:flex;align-items:center;gap:12px;flex:1;min-width:0}
+  .task-left span.title{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .task-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .badge{font-size:12px;padding:4px 7px;border-radius:6px;background:#f3f4f6;border:1px solid #eee}
+  .badge.deadline{background:#eef3ff;color:#1645a2;border-color:#dbe9ff}
+  .badge.tag{background:#f5f5f5;color:#333}
+  .badge.priority-high{background:#ffe7e7;color:#9a1e1e;border-color:#ffd6d6}
+  .badge.priority-medium{background:#fff7e0;color:#6b4c00;border-color:#fff0b8}
+  .badge.priority-low{background:#e9fff5;color:#005a3b;border-color:#c6f7e6}
 
-    .add-task {
-      display: grid;
-      grid-template-columns: 2fr 1fr 1fr auto;
-      gap: 8px;
-    }
+  .task-actions{display:flex;gap:8px;align-items:center}
+  .icon{border-radius:6px;padding:6px 8px;border:1px solid #ececec;background:#fff;cursor:pointer}
+  .icon.danger{color:var(--danger);border-color:#f8d7da}
 
-    .controls input,
-    .controls select,
-    .add-task input,
-    .add-task select,
-    .add-task button {
-      padding: 10px;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      font-size: 14px;
-    }
+  /* ---------- Subtasks ---------- */
+  .subtasks{display:flex;flex-direction:column;gap:8px;padding-left:34px}
+  .subtask{display:flex;align-items:center;justify-content:space-between;padding:8px;border-radius:8px;border:1px solid #f0f0f0;background:#fafafa}
+  .sub-left{display:flex;gap:8px;align-items:center;min-width:0}
+  .sub-left span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .sub-form{display:flex;gap:8px;margin-top:8px;padding-left:34px}
+  .sub-form input{flex:1;padding:8px;border-radius:8px;border:1px solid #eaeaea}
 
-    .add-task button {
-      border: none;
-      background: #2f76ff;
-      color: white;
-      font-weight: 500;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    .add-task button:hover {
-      background: #1d5ce0;
-    }
+  /* ---------- Bottom: utilities & stats ---------- */
+  .bottom-row{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap;margin-top:12px}
+  .stats{width:320px;padding:12px;border-radius:8px;background:#fff;border:1px solid #f0f0f0}
+  .utils{display:flex;gap:8px;align-items:center}
 
-    ul {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    li {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 10px 12px;
-      border: 1px solid #eee;
-      border-radius: 6px;
-      background: #fafafa;
-      cursor: grab;
-      transition: background 0.2s;
-    }
-
-    li:hover {
-      background: #f0f0f0;
-    }
-
-    li.dragging {
-      opacity: 0.5;
-    }
-
-    .task-left {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex: 1;
-    }
-
-    input[type="checkbox"] {
-      width: 18px;
-      height: 18px;
-      cursor: pointer;
-      accent-color: #2f76ff;
-    }
-
-    .done {
-      text-decoration: line-through;
-      color: #999;
-    }
-
-    .remove-btn {
-      background: transparent;
-      border: none;
-      color: #d33;
-      font-size: 16px;
-      cursor: pointer;
-    }
-
-    .deadline {
-      font-size: 12px;
-      padding: 2px 6px;
-      border-radius: 4px;
-    }
-
-    .deadline.safe { background: #d4edda; color: #155724; }
-    .deadline.warning { background: #fff3cd; color: #856404; }
-    .deadline.danger { background: #f8d7da; color: #721c24; }
-
-    .tag {
-      font-size: 12px;
-      padding: 2px 6px;
-      background: #e5e5e5;
-      border-radius: 4px;
-      color: #444;
-    }
-  </style>
+  /* responsive */
+  @media (max-width:880px){
+    .controls{grid-template-columns:1fr}
+    .add-row{grid-template-columns:1fr;grid-auto-rows:auto}
+    .stats{width:100%}
+  }
+</style>
 </head>
 <body>
-  <h1>📋 To-Do List Pro Max</h1>
+  <div class="container">
+    <h1>📋 Tugas Farhan</h1>
 
-  <div class="todo-container">
-    <div class="progress">
-      <div class="progress-bar" id="progress-bar"></div>
+    <div class="card todo-wrap">
+      <!-- progress -->
+      <div class="top-row">
+        <div class="progress-box">
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <div style="font-weight:600">Progress</div>
+            <div style="font-size:13px;color:var(--muted)" id="progressText">0%</div>
+          </div>
+          <div class="progress-track" style="margin-top:8px">
+            <div class="progress-bar" id="progressBar"></div>
+          </div>
+          <div id="motivation">Belum ada progress, ayo mulai! 🚀</div>
+        </div>
+
+        <div style="min-width:220px">
+          <div style="display:flex;gap:8px;align-items:center">
+            <div style="font-size:13px;color:var(--muted)">Auto-sort by deadline</div>
+            <input type="checkbox" id="autosort" checked />
+            <button class="btn ghost" id="requestNotifBtn" title="Enable reminder notifications">🔔 Notif</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- controls -->
+      <div class="controls">
+        <input id="search" placeholder="Cari tugas..." />
+        <select id="filter">
+          <option value="all">Semua</option>
+          <option value="done">Selesai</option>
+          <option value="todo">Belum</option>
+        </select>
+        <div style="display:flex;gap:8px;justify-content:flex-end;align-items:center">
+          <button class="btn ghost" id="exportJson">Export JSON</button>
+          <label style="display:inline-flex;align-items:center" class="btn ghost">
+            Import JSON <input type="file" id="importFile" accept=".json" style="display:none" />
+          </label>
+        </div>
+      </div>
+
+      <!-- add task -->
+      <div class="add-row">
+        <input id="newText" placeholder="Tambah tugas baru..." />
+        <input id="newDeadline" type="datetime-local" />
+        <select id="newCategory">
+          <option>Umum</option><option>Kuliah</option><option>Kerja</option><option>Pribadi</option>
+        </select>
+        <select id="newPriority">
+          <option value="low">Rendah</option>
+          <option value="medium" selected>Sedang</option>
+          <option value="high">Tinggi</option>
+        </select>
+        <button class="btn" id="addBtn">Tambah</button>
+      </div>
+
+      <!-- list -->
+      <div class="list card" id="taskListContainer" style="margin-top:6px;padding:14px">
+        <div id="taskList" class="list"></div>
+      </div>
+
+      <!-- bottom row: stats + utils -->
+      <div class="bottom-row">
+        <div class="stats card">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div style="font-weight:700">Stats</div>
+            <div style="font-size:13px;color:var(--muted)">XP: <span id="xp">0</span> • Level: <span id="level">1</span></div>
+          </div>
+          <canvas id="catChart" style="max-height:160px;margin-top:12px"></canvas>
+          <canvas id="compChart" style="max-height:140px;margin-top:12px"></canvas>
+          <div style="margin-top:10px;font-size:13px;color:var(--muted)">
+            Total tugas: <span id="totalCount">0</span> • Selesai: <span id="doneCount">0</span>
+          </div>
+          <div id="badges" style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap"></div>
+        </div>
+
+        <div style="flex:1;min-width:220px" class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div style="font-weight:700">Utilities</div>
+            <div style="font-size:13px;color:var(--muted)">Reminders: <span id="remCount">0</span></div>
+          </div>
+
+          <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn ghost" id="clearAll">Hapus Semua</button>
+            <button class="btn ghost" id="resetStats">Reset XP</button>
+            <button class="btn" id="exportCSV">Export CSV</button>
+          </div>
+
+          <div style="margin-top:12px;font-size:13px;color:var(--muted)">
+            Tips: tekan <b>Enter</b> di input untuk tambah cepat. Double-click judul/subtask untuk edit.
+          </div>
+        </div>
+      </div>
     </div>
-    <div id="motivation">Belum ada progress, ayo mulai! 🚀</div>
-
-    <div class="controls">
-      <input type="text" id="search" placeholder="Cari tugas...">
-      <select id="filter">
-        <option value="all">Semua</option>
-        <option value="done">Selesai</option>
-        <option value="todo">Belum</option>
-      </select>
-    </div>
-
-    <div class="add-task">
-      <input type="text" id="new-task" placeholder="Tambah tugas baru...">
-      <input type="date" id="deadline">
-      <select id="category">
-        <option value="Umum">Umum</option>
-        <option value="Kuliah">Kuliah</option>
-        <option value="Kerja">Kerja</option>
-        <option value="Pribadi">Pribadi</option>
-      </select>
-      <button onclick="addTask()">Tambah</button>
-    </div>
-
-    <ul id="task-list"></ul>
   </div>
 
-  <script>
-    const taskList = document.getElementById('task-list');
-    const progressBar = document.getElementById('progress-bar');
-    const motivation = document.getElementById('motivation');
-    const searchInput = document.getElementById('search');
-    const filterSelect = document.getElementById('filter');
+<script>
+/* -----------------------
+   Data model & storage
+   ----------------------- */
+const LS_KEY = 'todo_ultra_v1';
+let state = JSON.parse(localStorage.getItem(LS_KEY)) || {
+  tasks: [],
+  xp: 0,
+  level: 1,
+  badges: []
+};
 
-    let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+function persist(){ localStorage.setItem(LS_KEY, JSON.stringify(state)); }
 
-    function saveTasks() {
-      localStorage.setItem('tasks', JSON.stringify(tasks));
+/* -----------------------
+   Utility helpers
+   -----------------------*/
+const $ = sel => document.querySelector(sel);
+const genId = ()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+
+function addXP(amount){
+  state.xp += amount;
+  const levelBefore = state.level;
+  const newLevel = Math.floor(state.xp / 100) + 1;
+  state.level = newLevel;
+  // badges: simple examples
+  if(state.xp >= 100 && !state.badges.includes('Beginner')) state.badges.push('Beginner');
+  if(state.xp >= 500 && !state.badges.includes('Productivity Master')) state.badges.push('Productivity Master');
+  persist(); updateStatsUI();
+  if(newLevel > levelBefore) {
+    alert(`Level up! Sekarang level ${newLevel} 🎉`);
+  }
+}
+
+/* -----------------------
+   Rendering & logic
+   -----------------------*/
+const taskListEl = $('#taskList');
+const progressBar = $('#progressBar');
+const progressText = $('#progressText');
+const motivation = $('#motivation');
+const xpEl = $('#xp');
+const levelEl = $('#level');
+const badgesEl = $('#badges');
+const totalCountEl = $('#totalCount');
+const doneCountEl = $('#doneCount');
+const remCountEl = $('#remCount');
+const autosortEl = $('#autosort');
+
+function getDeadlineClass(deadline){
+  if(!deadline) return '';
+  const now = new Date();
+  const d = new Date(deadline);
+  const diffHours = (d - now)/(1000*60*60);
+  if(diffHours < 0) return 'deadline-danger';
+  if(diffHours <= 48) return 'deadline-warning';
+  return 'deadline-safe';
+}
+
+// compute simple reminders count (due within 1 hour or overdue)
+function computeReminders(tasks){
+  const now = new Date();
+  let c = 0;
+  tasks.forEach(t=>{
+    if(!t.deadline) return;
+    const d = new Date(t.deadline);
+    const diff = (d - now)/(1000*60);
+    if(diff <= 60) c++;
+  });
+  return c;
+}
+
+function sortTasksIfNeeded(){
+  if(autosortEl.checked){
+    state.tasks.sort((a,b)=>{
+      if(!a.deadline && !b.deadline) {
+        // fallback to priority weight (high first)
+        const w = {high:0,medium:1,low:2};
+        return (w[a.priority||'medium'] || 1) - (w[b.priority||'medium'] || 1);
+      }
+      if(!a.deadline) return 1;
+      if(!b.deadline) return -1;
+      const da = new Date(a.deadline), db = new Date(b.deadline);
+      if(da - db !== 0) return da - db;
+      const w = {high:0,medium:1,low:2};
+      return (w[a.priority||'medium']||1) - (w[b.priority||'medium']||1);
+    });
+  }
+}
+
+function render(){
+  sortTasksIfNeeded();
+  taskListEl.innerHTML = '';
+  const filter = $('#filter').value;
+  const q = $('#search').value.trim().toLowerCase();
+
+  let total = 0, done = 0;
+  state.tasks.forEach((task, idx)=>{
+    // filter & search
+    if(filter === 'done' && !task.done) return;
+    if(filter === 'todo' && task.done) return;
+    if(q && !task.text.toLowerCase().includes(q)) return;
+
+    total++;
+    if(task.done) done++;
+
+    const taskEl = document.createElement('div');
+    taskEl.className = 'task';
+    taskEl.draggable = true;
+    taskEl.dataset.id = task.id;
+
+    // top row
+    const topRow = document.createElement('div'); topRow.className = 'task-top';
+    const left = document.createElement('div'); left.className = 'task-left';
+    const cb = document.createElement('input'); cb.type='checkbox'; cb.checked = !!task.done;
+    const title = document.createElement('span'); title.className = 'title'; title.textContent = task.text;
+    if(task.done) title.classList.add('done');
+    // double click edit
+    title.addEventListener('dblclick', ()=> {
+      const n = prompt('Edit tugas', task.text);
+      if(n !== null){ task.text = n.trim(); persist(); render(); }
+    });
+
+    cb.addEventListener('change', ()=>{
+      task.done = cb.checked;
+      // if parent check, sync subtasks
+      if(task.subtasks && task.subtasks.length){
+        task.subtasks.forEach(st => st.done = cb.checked);
+      }
+      if(cb.checked) addXP(10);
+      persist(); render();
+    });
+
+    left.appendChild(cb);
+    left.appendChild(title);
+    topRow.appendChild(left);
+
+    // meta
+    const meta = document.createElement('div'); meta.className = 'task-meta';
+    if(task.deadline){
+      const dl = document.createElement('span'); dl.className='badge deadline';
+      dl.textContent = (new Date(task.deadline)).toLocaleString('id-ID',{dateStyle:'short',timeStyle:'short'});
+      if((new Date(task.deadline)) < new Date()) dl.style.borderColor = '#f5c6cb';
+      meta.appendChild(dl);
     }
+    const tag = document.createElement('span'); tag.className='badge tag'; tag.textContent = task.category || 'Umum';
+    meta.appendChild(tag);
+    const pri = document.createElement('span'); pri.className = 'badge ' + (task.priority==='high'?'priority-high':task.priority==='medium'?'priority-medium':'priority-low');
+    pri.textContent = task.priority==='high'? 'Tinggi' : task.priority==='medium'?'Sedang':'Rendah';
+    meta.appendChild(pri);
 
-    function updateProgress() {
-      const total = tasks.length;
-      const done = tasks.filter(t => t.done).length;
-      const percent = total ? (done / total) * 100 : 0;
-      progressBar.style.width = percent + "%";
+    topRow.appendChild(meta);
 
-      if (percent === 0) motivation.textContent = "Belum ada progress, ayo mulai! 🚀";
-      else if (percent < 50) motivation.textContent = "Mantap, lanjut terus! 💪";
-      else if (percent < 100) motivation.textContent = "Dikit lagi selesai! 🔥";
-      else motivation.textContent = "Semua selesai! 🎉";
-    }
+    // actions
+    const actions = document.createElement('div'); actions.className = 'task-actions';
+    const btnSub = document.createElement('button'); btnSub.className = 'icon'; btnSub.textContent = '+ Sub';
+    const btnEdit = document.createElement('button'); btnEdit.className = 'icon'; btnEdit.textContent = 'Edit';
+    const btnDel = document.createElement('button'); btnDel.className = 'icon danger'; btnDel.textContent = 'Hapus';
+    actions.appendChild(btnSub); actions.appendChild(btnEdit); actions.appendChild(btnDel);
+    topRow.appendChild(actions);
 
-    function getDeadlineClass(deadline) {
-      if (!deadline) return "";
-      const today = new Date();
-      const d = new Date(deadline);
-      const diff = (d - today) / (1000 * 60 * 60 * 24);
-      if (diff < 0) return "danger";
-      if (diff <= 2) return "warning";
-      return "safe";
-    }
-
-    function renderTasks() {
-      taskList.innerHTML = "";
-      const search = searchInput.value.toLowerCase();
-      const filter = filterSelect.value;
-
-      tasks.forEach((task, index) => {
-        if (filter === "done" && !task.done) return;
-        if (filter === "todo" && task.done) return;
-        if (search && !task.text.toLowerCase().includes(search)) return;
-
-        const li = document.createElement("li");
-        li.draggable = true;
-
-        li.innerHTML = `
-          <div class="task-left">
-            <input type="checkbox" ${task.done ? "checked" : ""}>
-            <span class="${task.done ? "done" : ""}">${task.text}</span>
-            ${task.deadline ? `<span class="deadline ${getDeadlineClass(task.deadline)}">${task.deadline}</span>` : ""}
-            <span class="tag">${task.category}</span>
-          </div>
-          <button class="remove-btn">✕</button>
-        `;
-
-        li.querySelector("input").addEventListener("change", e => {
-          tasks[index].done = e.target.checked;
-          saveTasks();
-          renderTasks();
-        });
-
-        li.querySelector(".remove-btn").addEventListener("click", () => {
-          tasks.splice(index, 1);
-          saveTasks();
-          renderTasks();
-        });
-
-        li.querySelector("span").addEventListener("dblclick", e => {
-          const newText = prompt("Edit tugas:", task.text);
-          if (newText) {
-            tasks[index].text = newText;
-            saveTasks();
-            renderTasks();
-          }
-        });
-
-        li.addEventListener("dragstart", () => {
-          li.classList.add("dragging");
-        });
-        li.addEventListener("dragend", () => {
-          li.classList.remove("dragging");
-          const newTasks = [];
-          taskList.querySelectorAll("li").forEach(el => {
-            const text = el.querySelector("span").textContent;
-            newTasks.push(tasks.find(t => t.text === text));
-          });
-          tasks = newTasks;
-          saveTasks();
-          renderTasks();
-        });
-
-        taskList.appendChild(li);
+    // subtask list
+    const subsWrap = document.createElement('div'); subsWrap.className = 'subtasks';
+    (task.subtasks||[]).forEach(st=>{
+      const si = document.createElement('div'); si.className='subtask';
+      const sleft = document.createElement('div'); sleft.className='sub-left';
+      const scb = document.createElement('input'); scb.type='checkbox'; scb.checked=!!st.done;
+      const stext = document.createElement('span'); stext.textContent = st.text;
+      if(st.done) stext.classList.add('done');
+      stext.addEventListener('dblclick',()=>{
+        const n = prompt('Edit subtask', st.text);
+        if(n!==null){ st.text = n.trim(); persist(); render(); }
       });
+      scb.addEventListener('change', ()=>{
+        st.done = scb.checked;
+        // if all subtasks done then parent done
+        const allDone = (task.subtasks||[]).length && (task.subtasks||[]).every(x=>x.done);
+        task.done = allDone;
+        if(st.done) addXP(3);
+        persist(); render();
+      });
+      sleft.appendChild(scb); sleft.appendChild(stext);
+      const sdel = document.createElement('button'); sdel.className='icon'; sdel.textContent='Hapus';
+      sdel.addEventListener('click', ()=> {
+        task.subtasks = (task.subtasks||[]).filter(x=>x.id !== st.id);
+        persist(); render();
+      });
+      si.appendChild(sleft); si.appendChild(sdel);
+      subsWrap.appendChild(si);
+    });
 
-      updateProgress();
+    // sub add form
+    const subForm = document.createElement('div'); subForm.className='sub-form';
+    const subInput = document.createElement('input'); subInput.placeholder='Tambah subtask...';
+    const subBtn = document.createElement('button'); subBtn.className='btn ghost'; subBtn.textContent='Tambah';
+    subBtn.addEventListener('click', ()=>{
+      const v = subInput.value.trim(); if(!v) return;
+      task.subtasks = task.subtasks || [];
+      task.subtasks.push({id:genId(), text:v, done:false});
+      subInput.value=''; persist(); render();
+    });
+    subInput.addEventListener('keydown', e=>{ if(e.key==='Enter') subBtn.click(); });
+    subForm.appendChild(subInput); subForm.appendChild(subBtn);
+
+    // wire up action buttons
+    btnSub.addEventListener('click', ()=> subInput.focus());
+    btnEdit.addEventListener('click', ()=> {
+      const n = prompt('Edit tugas', task.text);
+      if(n!==null){ task.text = n.trim(); persist(); render(); }
+    });
+    btnDel.addEventListener('click', ()=> {
+      if(confirm('Hapus tugas ini?')) {
+        state.tasks = state.tasks.filter(t=>t.id !== task.id);
+        persist(); render();
+      }
+    });
+
+    taskEl.appendChild(topRow);
+    if((task.subtasks||[]).length) taskEl.appendChild(subsWrap);
+    taskEl.appendChild(subForm);
+
+    // drag events
+    taskEl.addEventListener('dragstart', (e)=> { taskEl.classList.add('dragging'); e.dataTransfer.setData('text/plain', task.id); });
+    taskEl.addEventListener('dragend', ()=> { taskEl.classList.remove('dragging'); persist(); render(); });
+
+    taskListEl.appendChild(taskEl);
+  });
+
+  // progress & stats
+  const totalTasks = state.tasks.length;
+  const doneTasks = state.tasks.filter(t=>t.done).length;
+  const pct = totalTasks ? Math.round((doneTasks/totalTasks)*100) : 0;
+  progressBar.style.width = pct + '%';
+  progressText.textContent = pct + '%';
+  if(pct===0) motivation.textContent='Belum ada progress, ayo mulai! 🚀';
+  else if(pct<50) motivation.textContent='Mantap, lanjut terus! 💪';
+  else if(pct<100) motivation.textContent='Dikit lagi selesai! 🔥';
+  else motivation.textContent='Semua selesai! 🎉';
+
+  totalCountEl.textContent = totalTasks;
+  doneCountEl.textContent = doneTasks;
+  xpEl.textContent = state.xp;
+  levelEl.textContent = state.level;
+
+  // badges
+  badgesEl.innerHTML='';
+  state.badges.forEach(b=>{
+    const sp = document.createElement('span'); sp.className='badge'; sp.textContent=b;
+    badgesEl.appendChild(sp);
+  });
+
+  // reminders count
+  remCountEl.textContent = computeReminders(state.tasks);
+
+  // update charts
+  updateCharts();
+  persist();
+}
+
+/* -----------------------
+   Drag-over handling
+   ----------------------- */
+taskListEl.addEventListener('dragover', e=>{
+  e.preventDefault();
+  const dragging = document.querySelector('.dragging');
+  if(!dragging) return;
+  const siblings = [...taskListEl.querySelectorAll('.task:not(.dragging)')];
+  const next = siblings.find(s => e.clientY <= s.getBoundingClientRect().top + s.offsetHeight/2);
+  taskListEl.insertBefore(dragging, next || null);
+});
+
+taskListEl.addEventListener('drop', e=>{
+  e.preventDefault();
+  // rebuild order
+  const newOrder = [...taskListEl.querySelectorAll('.task')].map(el => el.dataset.id);
+  state.tasks = newOrder.map(id => state.tasks.find(t => t.id === id)).filter(Boolean);
+  persist(); render();
+});
+
+/* -----------------------
+   Add task & events
+   ----------------------- */
+$('#addBtn').addEventListener('click', ()=> {
+  const text = $('#newText').value.trim();
+  if(!text) return;
+  const deadline = $('#newDeadline').value || null;
+  const category = $('#newCategory').value || 'Umum';
+  const priority = $('#newPriority').value || 'medium';
+  state.tasks.push({ id: genId(), text, done:false, deadline, category, priority, subtasks: [] });
+  $('#newText').value=''; $('#newDeadline').value='';
+  persist(); render();
+});
+$('#newText').addEventListener('keydown', e=>{ if(e.key==='Enter') $('#addBtn').click(); });
+
+$('#search').addEventListener('input', render);
+$('#filter').addEventListener('change', render);
+$('#autosort').addEventListener('change', render);
+
+/* -----------------------
+   Export / Import JSON & CSV
+   ----------------------- */
+$('#exportJson').addEventListener('click', ()=>{
+  const dataStr = JSON.stringify(state, null, 2);
+  const blob = new Blob([dataStr], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'todo-ultra.json'; a.click();
+  URL.revokeObjectURL(url);
+});
+
+$('#importFile').addEventListener('change', (e)=>{
+  const f = e.target.files[0]; if(!f) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try{
+      const imported = JSON.parse(ev.target.result);
+      if(imported.tasks) {
+        // merge simple: append imported tasks (avoid id collision by regenerating ids)
+        imported.tasks.forEach(t=>{
+          t.id = genId();
+          (t.subtasks || []).forEach(s=> s.id = genId());
+          state.tasks.push(t);
+        });
+        // also import xp/level optionally
+        if(typeof imported.xp === 'number') state.xp = (state.xp||0) + (imported.xp||0);
+        persist(); render();
+        alert('Import sukses!');
+      } else alert('File JSON tidak valid.');
+    }catch(err){ alert('Gagal membaca file JSON.'); }
+  };
+  reader.readAsText(f);
+  e.target.value='';
+});
+
+$('#exportCSV').addEventListener('click', ()=>{
+  // Flatten tasks (one row per task; subtasks count)
+  const rows = [['id','text','done','deadline','category','priority','subtask_count']];
+  state.tasks.forEach(t=>{
+    rows.push([t.id, `"${t.text.replace(/"/g,'""')}"`, t.done, t.deadline||'', t.category, t.priority, (t.subtasks||[]).length]);
+  });
+  const csv = rows.map(r=>r.join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const url = URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='todo-ultra.csv'; a.click();
+  URL.revokeObjectURL(url);
+});
+
+/* -----------------------
+   Clear / reset
+   ----------------------- */
+$('#clearAll').addEventListener('click', ()=>{
+  if(confirm('Hapus semua tugas?')) { state.tasks = []; persist(); render(); }
+});
+$('#resetStats').addEventListener('click', ()=>{
+  if(confirm('Reset XP & level?')) { state.xp = 0; state.level = 1; state.badges = []; persist(); render(); }
+});
+
+/* -----------------------
+   Charts (Chart.js)
+   ----------------------- */
+let catChart=null, compChart=null;
+
+function updateCharts(){
+  // category distribution (pie)
+  const catCounts = {};
+  state.tasks.forEach(t => { catCounts[t.category = (t.category||'Umum')] = (catCounts[t.category]||0)+1; });
+  const labels = Object.keys(catCounts);
+  const data = Object.values(catCounts);
+
+  if(!catChart){
+    catChart = new Chart($('#catChart'), {type:'pie', data:{labels, datasets:[{data, backgroundColor:['#60a5fa','#f97316','#34d399','#a78bfa','#f43f5e']}]}, options:{plugins:{legend:{position:'bottom'}}}});
+  } else {
+    catChart.data.labels = labels; catChart.data.datasets[0].data = data; catChart.update();
+  }
+
+  // completion bar: last 7 days completions
+  const last7 = Array.from({length:7},(_,i)=> {
+    const d = new Date(); d.setDate(d.getDate() - (6 - i)); d.setHours(0,0,0,0);
+    return d;
+  });
+
+  const compCounts = last7.map(d=>{
+    const next = new Date(d); next.setDate(d.getDate()+1);
+    return state.tasks.reduce((acc,t)=>{
+      // find completedAt if we tracked; we don't track timestamps currently.
+      // We'll approximate: count tasks with deadline in that date and marked done.
+      if(!t.deadline) return acc;
+      const dl = new Date(t.deadline);
+      if(t.done && dl >= d && dl < next) return acc+1;
+      return acc;
+    },0);
+  });
+
+  const labels7 = last7.map(d=> d.toLocaleDateString('id-ID',{month:'short',day:'numeric'}));
+  if(!compChart){
+    compChart = new Chart($('#compChart'), {type:'bar', data:{labels:labels7,datasets:[{label:'Completions (approx)',data:compCounts}]}, options:{plugins:{legend:{display:false}}}});
+  } else {
+    compChart.data.labels = labels7; compChart.data.datasets[0].data = compCounts; compChart.update();
+  }
+}
+
+/* -----------------------
+   Reminders (Notification API)
+   ----------------------- */
+let notifyEnabled = false;
+$('#requestNotifBtn').addEventListener('click', async ()=>{
+  if(Notification.permission === 'granted'){ notifyEnabled = true; alert('Notifikasi sudah aktif.'); }
+  else if(Notification.permission === 'denied') { alert('Notifikasi ditolak di browser.'); }
+  else {
+    const p = await Notification.requestPermission();
+    notifyEnabled = p === 'granted';
+    alert(notifyEnabled ? 'Notifikasi diizinkan.' : 'Notifikasi tidak diizinkan.');
+  }
+});
+
+function checkReminders(){
+  const now = new Date();
+  state.tasks.forEach(t=>{
+    if(!t.deadline) return;
+    const d = new Date(t.deadline);
+    const mins = (d - now)/(1000*60);
+    // send reminder if within 60 mins and not notified yet, or overdue and not reported
+    t._notified = t._notified || {withinHour:false,overdue:false};
+    if(mins <= 60 && mins > 0 && !t._notified.withinHour){
+      // notify
+      const text = `Tugas "${t.text}" akan jatuh tempo dalam ${Math.round(mins)} menit.`;
+      triggerNotification('Deadline dekat', text);
+      t._notified.withinHour = true;
+    } else if(mins <= 0 && !t._notified.overdue && !t.done){
+      const text = `Tugas "${t.text}" melewati deadline!`;
+      triggerNotification('Deadline lewat', text);
+      t._notified.overdue = true;
     }
+  });
+  persist();
+  remCountEl.textContent = computeReminders(state.tasks);
+}
 
-    function addTask() {
-      const text = document.getElementById("new-task").value.trim();
-      const deadline = document.getElementById("deadline").value;
-      const category = document.getElementById("category").value;
-      if (!text) return;
+function triggerNotification(title, body){
+  if(notifyEnabled && Notification.permission === 'granted'){
+    try { new Notification(title, {body}); }
+    catch(e){ alert(`${title}\n${body}`); }
+  } else {
+    // fallback in-page
+    alert(`${title}\n\n${body}`);
+  }
+}
 
-      tasks.push({ text, done: false, deadline, category });
-      saveTasks();
-      document.getElementById("new-task").value = "";
-      document.getElementById("deadline").value = "";
-      renderTasks();
-    }
+/* -----------------------
+   Initialize
+   ----------------------- */
+function init(){
+  // ensure each task & subtask has id
+  state.tasks = state.tasks.map(t=>{
+    if(!t.id) t.id = genId();
+    t.subtasks = (t.subtasks||[]).map(s => { if(!s.id) s.id = genId(); return s; });
+    return t;
+  });
+  persist();
+  render();
+  updateCharts();
+  // check reminders each minute
+  setInterval(checkReminders, 60*1000);
+  // also check immediately
+  checkReminders();
+}
 
-    searchInput.addEventListener("input", renderTasks);
-    filterSelect.addEventListener("change", renderTasks);
+init();
 
-    renderTasks();
-  </script>
+</script>
 </body>
 </html>
